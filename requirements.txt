@@ -1,0 +1,7 @@
+streamlit>=1.52.2
+tensorflow>=2.20.0
+pandas>=2.3.3
+Pillow>=11.3.0
+scikit-learn>=1.8.0
+numpy>=2.2.6
+tqdm>=4.62.3

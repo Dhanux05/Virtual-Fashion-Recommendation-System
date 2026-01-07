@@ -23,7 +23,8 @@ ENV/
 Thumbs.db
 
 # Streamlit
-.streamlit/
+# .streamlit/  # Keep config.toml for deployment
+.streamlit/secrets.toml
 
 # Uploaded files
 uploader/*

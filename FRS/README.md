@@ -146,6 +146,32 @@ The training and validation processes conducted on the smaller dataset demonstra
 
 
 
+## Deployment
+
+### Streamlit Cloud (Recommended - Free)
+
+Streamlit Cloud is the easiest and best way to deploy this application:
+
+1. **Push your code to GitHub** (already done)
+2. **Go to** [share.streamlit.io](https://share.streamlit.io)
+3. **Sign in** with your GitHub account
+4. **Click "New app"**
+5. **Select your repository:** `Dhanux05/Virtual-Fashion-Recommendation-System`
+6. **Main file path:** `FRS/main.py`
+7. **Python version:** 3.11
+8. **Click "Deploy"**
+
+**Note:** Make sure to include the `.pkl` files in your repository or generate them after deployment.
+
+### Alternative Deployment Options
+
+- **Railway** - Good for Python apps with ML models
+- **Render** - Free tier available, supports Streamlit
+- **Heroku** - Requires credit card for verification
+- **AWS/GCP** - For production-scale deployments
+
+**Note:** Vercel is not suitable for Streamlit applications as it's designed for static sites and serverless functions, not persistent Python web applications.
+
 ## Conclusion
 
 In this project, we have introduced an innovative framework for fashion recommendation, emphasizing data-driven, visually relevant, and simple yet effective recommendation systems for fashion product images. The approach involves a two-stage process that is first, extracting features from an input image using a CNN classifier, allowing customers to upload any fashion image from an e-commerce website; second, generating similar images based on the input's features and texture. This methodology enhances recommendation accuracy and enriches the fashion exploration experience for both direct and indirect consumers. Continued research in this area will further improve recommendation systems, benefiting the fashion industry and its users.
