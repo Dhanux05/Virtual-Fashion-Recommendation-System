@@ -630,11 +630,22 @@ if 'history' not in st.session_state:
 
 def save_file(uploaded_file):
     try:
-        with open(os.path.join("uploader", uploaded_file.name), 'wb') as f:
+        # Get the base directory
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        uploader_dir = os.path.join(base_dir, "uploader")
+        
+        # Create uploader directory if it doesn't exist
+        if not os.path.exists(uploader_dir):
+            os.makedirs(uploader_dir, exist_ok=True)
+        
+        # Save the file
+        file_path = os.path.join(uploader_dir, uploaded_file.name)
+        with open(file_path, 'wb') as f:
             f.write(uploaded_file.getbuffer())
-            return 1
-    except:
-        return 0
+        return file_path
+    except Exception as e:
+        st.error(f"Error saving file: {str(e)}")
+        return None
 
 
 def extract_img_features(img_path, model):
@@ -662,25 +673,27 @@ def recommendd(features, features_list):
 main_col, history_col = st.columns([3, 1])
 
 with main_col:
-    # Let the user upload an image from their device via the browser
-    uploaded_file = st.file_uploader("Upload a fashion product image", type=["jpg", "jpeg", "png"])
-    if uploaded_file is not None:
-        if save_file(uploaded_file):
-            # display image
-            show_images = Image.open(uploaded_file)
-            size = (400, 400)
-            resized_im = show_images.resize(size)
-            st.markdown("### Uploaded Image")
-            st.image(resized_im, use_container_width=True)
-            # extract features of uploaded image
-            features = extract_img_features(os.path.join("uploader", uploaded_file.name), model)
-            #st.text(features)
-            img_indicess = recommendd(features, features_list)
+# Let the user upload an image from their device via the browser
+uploaded_file = st.file_uploader("Upload a fashion product image", type=["jpg", "jpeg", "png"])
+if uploaded_file is not None:
+        saved_path = save_file(uploaded_file)
+        if saved_path:
+            try:
+        # display image
+        show_images = Image.open(uploaded_file)
+        size = (400, 400)
+        resized_im = show_images.resize(size)
+                st.markdown("### Uploaded Image")
+                st.image(resized_im, use_container_width=True)
+        # extract features of uploaded image
+                features = extract_img_features(saved_path, model)
+        #st.text(features)
+        img_indicess = recommendd(features, features_list)
             
             # Store in history
             history_entry = {
                 'uploaded_image': uploaded_file.name,
-                'uploaded_image_path': os.path.join("uploader", uploaded_file.name),
+                'uploaded_image_path': saved_path,
                 'recommendations': [img_files_list[img_indicess[0][i]] for i in range(5)],
                 'timestamp': pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
             }
@@ -690,7 +703,7 @@ with main_col:
                 st.session_state.history = st.session_state.history[:10]
             
             st.markdown("### Recommended Items")
-            col1,col2,col3,col4,col5 = st.columns(5)
+        col1,col2,col3,col4,col5 = st.columns(5)
 
             # Display recommended images
             for idx, col in enumerate([col1, col2, col3, col4, col5]):
@@ -731,8 +744,12 @@ with main_col:
                             st.image(rec_img, use_container_width=True, clamp=True)
                         except:
                             pass
+            except Exception as e:
+                st.error(f"Error processing image: {str(e)}")
+                st.info("Please try uploading a different image or check the console for more details.")
         else:
-            st.header("Some error occur")
+            st.error("❌ Failed to save uploaded file. Please try again.")
+            st.info("Make sure you have proper permissions and the file is a valid image format (JPG, JPEG, PNG).")
 
 with history_col:
     st.markdown("""
