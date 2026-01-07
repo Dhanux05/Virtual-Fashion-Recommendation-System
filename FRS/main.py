@@ -22,7 +22,7 @@ model = Sequential([model, GlobalMaxPooling2D()])
 # Fashion Animated Background
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Great+Vibes&family=Pacifico&family=Satisfy&family=Poppins:wght@300;400;600&display=swap');
     
     /* Override Streamlit default background */
     html, body, [class*="css"] {
@@ -145,16 +145,18 @@ st.markdown("""
         margin-top: 2rem;
     }
     
-    /* Title styling - Animated and Attractive */
+    /* Title styling - Animated and Attractive - Script Font */
     h1 {
-        font-family: 'Playfair Display', serif !important;
+        font-family: 'Dancing Script', 'Great Vibes', 'Pacifico', cursive !important;
         text-align: center;
-        font-size: 3.5rem;
+        font-size: 4.5rem;
         margin-bottom: 2rem;
         font-weight: 700;
         position: relative;
         z-index: 2;
-        letter-spacing: 3px;
+        letter-spacing: 2px;
+        text-transform: none;
+        font-style: normal;
         background: linear-gradient(135deg, #00d4ff 0%, #5b9fff 25%, #a855f7 50%, #ec4899 75%, #00d4ff 100%);
         background-size: 200% 200%;
         -webkit-background-clip: text;
