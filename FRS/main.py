@@ -681,45 +681,51 @@ def get_image_path(img_path_from_list):
     # Normalize the path - handle both forward and backward slashes
     # Extract just the filename from the path (handles paths like "Img_Dataset\10432.jpg")
     normalized_path = os.path.normpath(str(img_path_from_list))
-    filename = os.path.basename(normalized_path)
+    
+    # Extract filename - if path contains "Img_Dataset", extract just the filename part
+    # This prevents duplication when joining paths
+    path_str = str(img_path_from_list).replace('\\', '/')  # Normalize to forward slashes first
+    path_parts = path_str.split('/')
+    
+    # If path starts with "Img_Dataset", extract just the filename
+    if len(path_parts) > 1 and path_parts[0].lower() == "img_dataset":
+        filename = path_parts[-1]  # Get just the filename
+    else:
+        # Otherwise, use basename
+        filename = os.path.basename(normalized_path)
     
     # Possible paths to try (prioritize most likely locations)
+    # Always use just the filename to avoid duplication
     possible_paths = [
-        # Most likely: Img_Dataset folder in FRS directory
+        # Most likely: Img_Dataset folder in FRS directory (base_dir is FRS)
         os.path.join(base_dir, "Img_Dataset", filename),
-        # Original normalized path
-        normalized_path,
-        # Relative to FRS directory (if path is relative)
-        os.path.join(base_dir, normalized_path),
-        # Just the filename in Img_Dataset
-        os.path.join(base_dir, "Img_Dataset", os.path.basename(normalized_path)),
-        # Relative paths from current working directory
+        # Try with absolute path
+        os.path.abspath(os.path.join(base_dir, "Img_Dataset", filename)),
+        # Try relative to current working directory
         os.path.join("Img_Dataset", filename),
         os.path.join("FRS", "Img_Dataset", filename),
-        # Absolute path versions
-        os.path.abspath(os.path.join(base_dir, "Img_Dataset", filename)),
-        os.path.abspath(normalized_path),
+        # Only try original path if it's an absolute path and doesn't contain "Img_Dataset" in a way that would duplicate
+        normalized_path if (os.path.isabs(normalized_path) and "Img_Dataset" not in os.path.dirname(normalized_path)) else None,
     ]
+    
+    # Remove None values
+    possible_paths = [p for p in possible_paths if p is not None]
     
     # Try each path
     for path in possible_paths:
         # Normalize the path to handle any remaining backslash issues
         path = os.path.normpath(path)
-        if os.path.exists(path):
+        if os.path.exists(path) and os.path.isfile(path):
             try:
-                # Verify it's actually an image file by trying to open it
-                img = Image.open(path)
-                img.verify()  # Verify the image
-                # Reopen because verify() closes the file
+                # Try to open the image to verify it's valid
+                # Don't use verify() as it closes the file and can cause issues
+                test_img = Image.open(path)
+                test_img.load()  # Load the image to check if it's valid
+                test_img.close()
                 return path
             except Exception:
-                # If verify fails, still try to return the path if file exists
-                # (some images might not verify but still be valid)
-                try:
-                    Image.open(path).close()
-                    return path
-                except:
-                    continue
+                # If opening fails, continue to next path
+                continue
     
     # If none found, return the most likely path (will show error but at least tries)
     return os.path.join(base_dir, "Img_Dataset", filename)
@@ -777,8 +783,16 @@ with main_col:
                                 st.image(rec_img, use_container_width=True, clamp=True)
                             except Exception as img_error:
                                 # If get_image_path returned a path that doesn't work, 
-                                # try one more time with just the filename
-                                filename = os.path.basename(os.path.normpath(str(img_path_from_list)))
+                                # try one more time with just the filename (extracted properly)
+                                path_str = str(img_path_from_list).replace('\\', '/')
+                                path_parts = path_str.split('/')
+                                
+                                # Extract filename - if path contains "Img_Dataset", extract just the filename part
+                                if len(path_parts) > 1 and path_parts[0].lower() == "img_dataset":
+                                    filename = path_parts[-1]
+                                else:
+                                    filename = os.path.basename(os.path.normpath(str(img_path_from_list)))
+                                
                                 final_path = os.path.join(BASE_DIR, "Img_Dataset", filename)
                                 
                                 if os.path.exists(final_path):
