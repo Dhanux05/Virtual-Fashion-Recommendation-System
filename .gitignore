@@ -29,9 +29,8 @@ Thumbs.db
 uploader/*
 !uploader/.gitkeep
 
-# Large data files (optional - uncomment if you don't want to push these)
-# *.pkl
-# Img_Dataset/
+# Large data files - exclude .pkl files to avoid LFS issues
+*.pkl
 
 # Jupyter Notebook
 .ipynb_checkpoints
