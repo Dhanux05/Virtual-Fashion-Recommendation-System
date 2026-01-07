@@ -673,77 +673,77 @@ def recommendd(features, features_list):
 main_col, history_col = st.columns([3, 1])
 
 with main_col:
-# Let the user upload an image from their device via the browser
-uploaded_file = st.file_uploader("Upload a fashion product image", type=["jpg", "jpeg", "png"])
-if uploaded_file is not None:
+    # Let the user upload an image from their device via the browser
+    uploaded_file = st.file_uploader("Upload a fashion product image", type=["jpg", "jpeg", "png"])
+    if uploaded_file is not None:
         saved_path = save_file(uploaded_file)
         if saved_path:
             try:
-        # display image
-        show_images = Image.open(uploaded_file)
-        size = (400, 400)
-        resized_im = show_images.resize(size)
+                # display image
+                show_images = Image.open(uploaded_file)
+                size = (400, 400)
+                resized_im = show_images.resize(size)
                 st.markdown("### Uploaded Image")
                 st.image(resized_im, use_container_width=True)
-        # extract features of uploaded image
+                # extract features of uploaded image
                 features = extract_img_features(saved_path, model)
-        #st.text(features)
-        img_indicess = recommendd(features, features_list)
-            
-            # Store in history
-            history_entry = {
-                'uploaded_image': uploaded_file.name,
-                'uploaded_image_path': saved_path,
-                'recommendations': [img_files_list[img_indicess[0][i]] for i in range(5)],
-                'timestamp': pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            st.session_state.history.insert(0, history_entry)
-            # Keep only last 10 entries
-            if len(st.session_state.history) > 10:
-                st.session_state.history = st.session_state.history[:10]
-            
-            st.markdown("### Recommended Items")
-        col1,col2,col3,col4,col5 = st.columns(5)
+                #st.text(features)
+                img_indicess = recommendd(features, features_list)
+                
+                # Store in history
+                history_entry = {
+                    'uploaded_image': uploaded_file.name,
+                    'uploaded_image_path': saved_path,
+                    'recommendations': [img_files_list[img_indicess[0][i]] for i in range(5)],
+                    'timestamp': pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                st.session_state.history.insert(0, history_entry)
+                # Keep only last 10 entries
+                if len(st.session_state.history) > 10:
+                    st.session_state.history = st.session_state.history[:10]
+                
+                st.markdown("### Recommended Items")
+                col1,col2,col3,col4,col5 = st.columns(5)
 
-            # Display recommended images
-            for idx, col in enumerate([col1, col2, col3, col4, col5]):
-                with col:
-                    roman_num = ["I", "II", "III", "IV", "V"][idx]
-                    st.markdown(f"<h3 style='color: #ffffff; text-align: center; margin-bottom: 10px;'>{roman_num}</h3>", unsafe_allow_html=True)
-                    try:
-                        img_path = img_files_list[img_indicess[0][idx]]
-                        
-                        # Try to open and display the image
-                        if os.path.exists(img_path):
-                            rec_img = Image.open(img_path)
-                            st.image(rec_img, use_container_width=True, clamp=True)
-                        else:
-                            # Try with Img_Dataset prefix
-                            alt_path = os.path.join("Img_Dataset", os.path.basename(img_path))
-                            if os.path.exists(alt_path):
-                                rec_img = Image.open(alt_path)
-                                st.image(rec_img, use_container_width=True, clamp=True)
-                            else:
-                                # Try absolute path
-                                abs_path = os.path.abspath(img_path)
-                                if os.path.exists(abs_path):
-                                    rec_img = Image.open(abs_path)
-                                    st.image(rec_img, use_container_width=True, clamp=True)
-                                else:
-                                    # Just try to display with the path as-is
-                                    try:
-                                        rec_img = Image.open(img_path)
-                                        st.image(rec_img, use_container_width=True, clamp=True)
-                                    except:
-                                        st.error(f"Can't load image")
-                    except Exception as e:
-                        # Last resort: try to display the path directly
+                # Display recommended images
+                for idx, col in enumerate([col1, col2, col3, col4, col5]):
+                    with col:
+                        roman_num = ["I", "II", "III", "IV", "V"][idx]
+                        st.markdown(f"<h3 style='color: #ffffff; text-align: center; margin-bottom: 10px;'>{roman_num}</h3>", unsafe_allow_html=True)
                         try:
                             img_path = img_files_list[img_indicess[0][idx]]
-                            rec_img = Image.open(img_path)
-                            st.image(rec_img, use_container_width=True, clamp=True)
-                        except:
-                            pass
+                            
+                            # Try to open and display the image
+                            if os.path.exists(img_path):
+                                rec_img = Image.open(img_path)
+                                st.image(rec_img, use_container_width=True, clamp=True)
+                            else:
+                                # Try with Img_Dataset prefix
+                                alt_path = os.path.join("Img_Dataset", os.path.basename(img_path))
+                                if os.path.exists(alt_path):
+                                    rec_img = Image.open(alt_path)
+                                    st.image(rec_img, use_container_width=True, clamp=True)
+                                else:
+                                    # Try absolute path
+                                    abs_path = os.path.abspath(img_path)
+                                    if os.path.exists(abs_path):
+                                        rec_img = Image.open(abs_path)
+                                        st.image(rec_img, use_container_width=True, clamp=True)
+                                    else:
+                                        # Just try to display with the path as-is
+                                        try:
+                                            rec_img = Image.open(img_path)
+                                            st.image(rec_img, use_container_width=True, clamp=True)
+                                        except:
+                                            st.error(f"Can't load image")
+                        except Exception as e:
+                            # Last resort: try to display the path directly
+                            try:
+                                img_path = img_files_list[img_indicess[0][idx]]
+                                rec_img = Image.open(img_path)
+                                st.image(rec_img, use_container_width=True, clamp=True)
+                            except:
+                                pass
             except Exception as e:
                 st.error(f"Error processing image: {str(e)}")
                 st.info("Please try uploading a different image or check the console for more details.")
