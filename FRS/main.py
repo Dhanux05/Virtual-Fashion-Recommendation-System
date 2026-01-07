@@ -675,40 +675,54 @@ def get_image_path(img_path_from_list):
     Resolve image path from img_files_list to actual file location.
     Tries multiple possible paths to find the image.
     """
-    # Get base directory
+    # Get base directory (FRS directory)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Possible paths to try
+    # Normalize the path - handle both forward and backward slashes
+    # Extract just the filename from the path (handles paths like "Img_Dataset\10432.jpg")
+    normalized_path = os.path.normpath(str(img_path_from_list))
+    filename = os.path.basename(normalized_path)
+    
+    # Possible paths to try (prioritize most likely locations)
     possible_paths = [
-        # Original path
-        img_path_from_list,
-        # Relative to FRS directory
-        os.path.join(base_dir, img_path_from_list),
-        # In Img_Dataset folder
-        os.path.join(base_dir, "Img_Dataset", os.path.basename(img_path_from_list)),
-        os.path.join(base_dir, "Img_Dataset", img_path_from_list),
-        # Relative paths
-        os.path.join("Img_Dataset", os.path.basename(img_path_from_list)),
-        os.path.join("Img_Dataset", img_path_from_list),
-        os.path.join("FRS", "Img_Dataset", os.path.basename(img_path_from_list)),
-        os.path.join("FRS", "Img_Dataset", img_path_from_list),
-        # Absolute path
-        os.path.abspath(img_path_from_list),
-        os.path.abspath(os.path.join(base_dir, "Img_Dataset", os.path.basename(img_path_from_list))),
+        # Most likely: Img_Dataset folder in FRS directory
+        os.path.join(base_dir, "Img_Dataset", filename),
+        # Original normalized path
+        normalized_path,
+        # Relative to FRS directory (if path is relative)
+        os.path.join(base_dir, normalized_path),
+        # Just the filename in Img_Dataset
+        os.path.join(base_dir, "Img_Dataset", os.path.basename(normalized_path)),
+        # Relative paths from current working directory
+        os.path.join("Img_Dataset", filename),
+        os.path.join("FRS", "Img_Dataset", filename),
+        # Absolute path versions
+        os.path.abspath(os.path.join(base_dir, "Img_Dataset", filename)),
+        os.path.abspath(normalized_path),
     ]
     
     # Try each path
     for path in possible_paths:
+        # Normalize the path to handle any remaining backslash issues
+        path = os.path.normpath(path)
         if os.path.exists(path):
             try:
-                # Verify it's actually an image file
-                Image.open(path).verify()
+                # Verify it's actually an image file by trying to open it
+                img = Image.open(path)
+                img.verify()  # Verify the image
+                # Reopen because verify() closes the file
                 return path
-            except:
-                continue
+            except Exception:
+                # If verify fails, still try to return the path if file exists
+                # (some images might not verify but still be valid)
+                try:
+                    Image.open(path).close()
+                    return path
+                except:
+                    continue
     
-    # If none found, return original path (will show error)
-    return img_path_from_list
+    # If none found, return the most likely path (will show error but at least tries)
+    return os.path.join(base_dir, "Img_Dataset", filename)
 
 # Create two columns: main content and history
 main_col, history_col = st.columns([3, 1])
@@ -762,27 +776,20 @@ with main_col:
                                 rec_img = Image.open(img_path)
                                 st.image(rec_img, use_container_width=True, clamp=True)
                             except Exception as img_error:
-                                # If direct path fails, try to reconstruct from filename
-                                filename = os.path.basename(img_path_from_list)
-                                dataset_paths = [
-                                    os.path.join(BASE_DIR, "Img_Dataset", filename),
-                                    os.path.join("Img_Dataset", filename),
-                                    os.path.join("FRS", "Img_Dataset", filename),
-                                ]
+                                # If get_image_path returned a path that doesn't work, 
+                                # try one more time with just the filename
+                                filename = os.path.basename(os.path.normpath(str(img_path_from_list)))
+                                final_path = os.path.join(BASE_DIR, "Img_Dataset", filename)
                                 
-                                found = False
-                                for dataset_path in dataset_paths:
-                                    if os.path.exists(dataset_path):
-                                        try:
-                                            rec_img = Image.open(dataset_path)
-                                            st.image(rec_img, use_container_width=True, clamp=True)
-                                            found = True
-                                            break
-                                        except:
-                                            continue
-                                
-                                if not found:
+                                if os.path.exists(final_path):
+                                    try:
+                                        rec_img = Image.open(final_path)
+                                        st.image(rec_img, use_container_width=True, clamp=True)
+                                    except Exception:
+                                        st.error(f"Image found but cannot be opened: {filename}")
+                                else:
                                     st.error(f"Image not found: {filename}")
+                                    st.caption(f"Expected at: {final_path}")
                         except Exception as e:
                             st.error(f"Error loading image: {str(e)}")
             except Exception as e:
