@@ -669,6 +669,47 @@ def recommendd(features, features_list):
 
     return indices
 
+
+def get_image_path(img_path_from_list):
+    """
+    Resolve image path from img_files_list to actual file location.
+    Tries multiple possible paths to find the image.
+    """
+    # Get base directory
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Possible paths to try
+    possible_paths = [
+        # Original path
+        img_path_from_list,
+        # Relative to FRS directory
+        os.path.join(base_dir, img_path_from_list),
+        # In Img_Dataset folder
+        os.path.join(base_dir, "Img_Dataset", os.path.basename(img_path_from_list)),
+        os.path.join(base_dir, "Img_Dataset", img_path_from_list),
+        # Relative paths
+        os.path.join("Img_Dataset", os.path.basename(img_path_from_list)),
+        os.path.join("Img_Dataset", img_path_from_list),
+        os.path.join("FRS", "Img_Dataset", os.path.basename(img_path_from_list)),
+        os.path.join("FRS", "Img_Dataset", img_path_from_list),
+        # Absolute path
+        os.path.abspath(img_path_from_list),
+        os.path.abspath(os.path.join(base_dir, "Img_Dataset", os.path.basename(img_path_from_list))),
+    ]
+    
+    # Try each path
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                # Verify it's actually an image file
+                Image.open(path).verify()
+                return path
+            except:
+                continue
+    
+    # If none found, return original path (will show error)
+    return img_path_from_list
+
 # Create two columns: main content and history
 main_col, history_col = st.columns([3, 1])
 
@@ -711,39 +752,39 @@ with main_col:
                         roman_num = ["I", "II", "III", "IV", "V"][idx]
                         st.markdown(f"<h3 style='color: #ffffff; text-align: center; margin-bottom: 10px;'>{roman_num}</h3>", unsafe_allow_html=True)
                         try:
-                            img_path = img_files_list[img_indicess[0][idx]]
+                            img_path_from_list = img_files_list[img_indicess[0][idx]]
+                            
+                            # Resolve the actual image path
+                            img_path = get_image_path(img_path_from_list)
                             
                             # Try to open and display the image
-                            if os.path.exists(img_path):
-                                rec_img = Image.open(img_path)
-                                st.image(rec_img, use_container_width=True, clamp=True)
-                            else:
-                                # Try with Img_Dataset prefix
-                                alt_path = os.path.join("Img_Dataset", os.path.basename(img_path))
-                                if os.path.exists(alt_path):
-                                    rec_img = Image.open(alt_path)
-                                    st.image(rec_img, use_container_width=True, clamp=True)
-                                else:
-                                    # Try absolute path
-                                    abs_path = os.path.abspath(img_path)
-                                    if os.path.exists(abs_path):
-                                        rec_img = Image.open(abs_path)
-                                        st.image(rec_img, use_container_width=True, clamp=True)
-                                    else:
-                                        # Just try to display with the path as-is
-                                        try:
-                                            rec_img = Image.open(img_path)
-                                            st.image(rec_img, use_container_width=True, clamp=True)
-                                        except:
-                                            st.error(f"Can't load image")
-                        except Exception as e:
-                            # Last resort: try to display the path directly
                             try:
-                                img_path = img_files_list[img_indicess[0][idx]]
                                 rec_img = Image.open(img_path)
                                 st.image(rec_img, use_container_width=True, clamp=True)
-                            except:
-                                pass
+                            except Exception as img_error:
+                                # If direct path fails, try to reconstruct from filename
+                                filename = os.path.basename(img_path_from_list)
+                                dataset_paths = [
+                                    os.path.join(BASE_DIR, "Img_Dataset", filename),
+                                    os.path.join("Img_Dataset", filename),
+                                    os.path.join("FRS", "Img_Dataset", filename),
+                                ]
+                                
+                                found = False
+                                for dataset_path in dataset_paths:
+                                    if os.path.exists(dataset_path):
+                                        try:
+                                            rec_img = Image.open(dataset_path)
+                                            st.image(rec_img, use_container_width=True, clamp=True)
+                                            found = True
+                                            break
+                                        except:
+                                            continue
+                                
+                                if not found:
+                                    st.error(f"Image not found: {filename}")
+                        except Exception as e:
+                            st.error(f"Error loading image: {str(e)}")
             except Exception as e:
                 st.error(f"Error processing image: {str(e)}")
                 st.info("Please try uploading a different image or check the console for more details.")
