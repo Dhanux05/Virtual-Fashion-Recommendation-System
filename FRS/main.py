@@ -12,8 +12,66 @@ from numpy.linalg import norm
 from sklearn.neighbors import NearestNeighbors
 import os
 
-features_list = pickle.load(open("image_features_embedding.pkl", "rb"))
-img_files_list = pickle.load(open("img_files.pkl", "rb"))
+# Load pickle files with proper path handling
+# Get the directory where main.py is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Try multiple possible paths for pickle files
+pkl_paths = [
+    os.path.join(BASE_DIR, "image_features_embedding.pkl"),
+    os.path.join(BASE_DIR, "..", "image_features_embedding.pkl"),
+    "image_features_embedding.pkl",
+    "FRS/image_features_embedding.pkl"
+]
+
+img_paths = [
+    os.path.join(BASE_DIR, "img_files.pkl"),
+    os.path.join(BASE_DIR, "..", "img_files.pkl"),
+    "img_files.pkl",
+    "FRS/img_files.pkl"
+]
+
+# Find and load features_list
+features_list = None
+features_path = None
+for path in pkl_paths:
+    if os.path.exists(path):
+        try:
+            features_list = pickle.load(open(path, "rb"))
+            features_path = path
+            break
+        except Exception as e:
+            continue
+
+# Find and load img_files_list
+img_files_list = None
+img_files_path = None
+for path in img_paths:
+    if os.path.exists(path):
+        try:
+            img_files_list = pickle.load(open(path, "rb"))
+            img_files_path = path
+            break
+        except Exception as e:
+            continue
+
+# Check if files were loaded successfully
+if features_list is None or img_files_list is None:
+    st.error("⚠️ Required model files (.pkl) not found!")
+    st.warning("""
+    **Missing Files:**
+    - `image_features_embedding.pkl`
+    - `img_files.pkl`
+    
+    These files are required for the recommendation system to work.
+    Please ensure they are in the FRS directory.
+    
+    **Searched paths:**
+    - FRS/image_features_embedding.pkl
+    - FRS/img_files.pkl
+    - Current directory
+    """)
+    st.stop()
 
 model = ResNet50(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
 model.trainable = False

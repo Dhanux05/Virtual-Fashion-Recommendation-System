@@ -30,8 +30,9 @@ Thumbs.db
 uploader/*
 !uploader/.gitkeep
 
-# Large data files - exclude .pkl files to avoid LFS issues
+# Large data files - allow .pkl files in FRS directory (needed for deployment)
 *.pkl
+!FRS/*.pkl
 
 # Jupyter Notebook
 .ipynb_checkpoints
