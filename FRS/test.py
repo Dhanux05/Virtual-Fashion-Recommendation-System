@@ -18,7 +18,7 @@ model.trainable = False
 
 model = Sequential([model, GlobalMaxPooling2D()])
 
-img = image.load_img('sample/shoes.jpg',target_size=(224,224))
+img = image.load_img('Sample/Shoes.jpg', target_size=(224,224))
 img_array = image.img_to_array(img)
 expand_img = np.expand_dims(img_array,axis=0)
 preprocessed_img = preprocess_input(expand_img)
@@ -34,9 +34,25 @@ distence, indices = neighbors.kneighbors([result_normlized])
 
 print(indices)
 
+import os
+
 for file in indices[0][1:6]:
-    print(img_files_list[file])
-    tmp_img = cv2.imread(img_files_list[file])
-    tmp_img = cv2.resize(tmp_img,(200,200))
-    cv2.imshow("output", tmp_img)
-    cv2.waitKey(0)
+    # img_files_list stores paths like "Img_Dataset\10000.jpg" recorded on
+    # whatever OS built the pickle; normalize to this OS before reading.
+    rel_path = img_files_list[file]
+    filename = str(rel_path).replace("\\", "/").split("/")[-1]
+    resolved_path = os.path.join("Img_Dataset", filename)
+    print(resolved_path)
+
+    tmp_img = cv2.imread(resolved_path)
+    if tmp_img is None:
+        print(f"  could not read {resolved_path}, skipping")
+        continue
+    tmp_img = cv2.resize(tmp_img, (200, 200))
+    try:
+        cv2.imshow("output", tmp_img)
+        cv2.waitKey(0)
+    except cv2.error:
+        # No GUI available (e.g. running headless/over SSH) - just skip
+        # the display step instead of crashing.
+        print("  (no display available to show the image)")

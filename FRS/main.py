@@ -73,9 +73,18 @@ if features_list is None or img_files_list is None:
     """)
     st.stop()
 
-model = ResNet50(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
-model.trainable = False
-model = Sequential([model, GlobalMaxPooling2D()])
+@st.cache_resource
+def load_model():
+    # Cached so the ResNet50 backbone is built/loaded once per server
+    # process instead of on every Streamlit rerun (previously this ran
+    # unconditionally at module load, so every image upload rebuilt the
+    # whole model from scratch).
+    base_model = ResNet50(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
+    base_model.trainable = False
+    return Sequential([base_model, GlobalMaxPooling2D()])
+
+
+model = load_model()
 
 # Fashion Animated Background
 st.markdown("""
